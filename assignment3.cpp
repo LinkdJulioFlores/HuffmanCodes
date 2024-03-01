@@ -1,5 +1,7 @@
+#include <cstdlib>
 #include <stdio.h>
 #include <iostream>
+#include <string>
 using namespace std;
 
 struct Node {
@@ -30,6 +32,10 @@ void swap(int idx1, int idx2) {
 // Function to insert a new node into the heap
 void heap_insert(Node* node) {
     int idx = heap_size;
+    // (idx-2) / 2 is the used to find the parent of an index
+    // (2*idx) + 1 left child
+    // (2*idx) + 2 right child
+    // Move parent nodes down if child is less than parent
     while (idx > 0 && node->freq < heap[(idx - 1) / 2]->freq) {
         heap[idx] = heap[(idx - 1) / 2];
         idx = (idx - 1) / 2;
@@ -45,7 +51,7 @@ void heapify(int idx) {
     int right = 2 * idx + 2;
 
     if (left < heap_size && heap[left]->freq < heap[smallest]->freq)
-        smallest = left;
+        smallest = left; // index of node
     if (right < heap_size && heap[right]->freq < heap[smallest]->freq)
         smallest = right;
 
@@ -60,6 +66,7 @@ Node* heap_delete() {
     if (heap_size == 0) return NULL;
 
     Node* root = heap[0];
+    // heap_size - 1 is because of zero index
     heap[0] = heap[heap_size - 1];
     heap_size--;
     heapify(0);
@@ -69,7 +76,7 @@ Node* heap_delete() {
 
 // Function to build the Huffman Tree
 Node* buildHuffmanTree(char data[], int freq[], int size) {
-    Node *left, *right, *top;
+    Node *left, *right, *top; // Parent
 
     // Step 1: Create leaf nodes for each character and insert them into the heap
     for (int i = 0; i < size; ++i)
@@ -77,11 +84,13 @@ Node* buildHuffmanTree(char data[], int freq[], int size) {
 
     // Step 2: Build the Huffman tree
     while (heap_size != 1) {
-        // Step 2.a: Remove the two nodes of the highest priority (lowest frequency) from the heap
+        // Remove the two nodes of the highest priority (lowest frequency) from the heap
         left = heap_delete();
         right = heap_delete();
 
-        // Step 2.b: Create a new internal node with these two nodes as children and with frequency equal to the sum of their frequencies. Add this node to the min heap
+        // $ means that the node is internal node
+        // this is used for when we print out the codes
+        // if the $ is not found then we hit a character for display
         top = new Node('$', left->freq + right->freq);
         top->left = left;
         top->right = right;
@@ -111,14 +120,13 @@ int main() {
                     'V', 'W', 'X', 'Y', 'Z'
                  };
     int freq[] = { 77, 17, 32, 42, 120, 24, 17, 50 ,76, 4, 7, 42, 24,
-                   67, 67, 20, 5, 59, 67, 85, 37, 12, 22, 4, 22, 2 
-                 };
+                    67, 67, 20, 5, 59, 67, 85, 37, 12, 22, 4, 22, 2 };
 
     int size = sizeof(arr) / sizeof(arr[0]);
 
     Node* root = buildHuffmanTree(arr, freq, size);
 
-    printCodes(root, "$");
+    printCodes(root, "");
 
     return 0;
 }
