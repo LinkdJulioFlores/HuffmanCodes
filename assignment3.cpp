@@ -1,6 +1,8 @@
 #include <cstdlib>
+#include<vector>
 #include <stdio.h>
 #include <iostream>
+#include<algorithm>
 #include <string>
 using namespace std;
 
@@ -16,6 +18,27 @@ struct Node {
     }
 };
 
+// This structure is what we need for our sorted data
+struct HuffmanCode{
+    char data;
+    string code;
+    unsigned freq;
+
+    HuffmanCode(char data, string code, unsigned freq)
+    {
+        this->data = data;
+        this->code = code;
+        this->freq = freq;
+    }
+
+    // operator overloading for sort() comparison
+    // https://www.geeksforgeeks.org/operator-overloading-cpp/
+    bool operator<(const HuffmanCode &huffy) const 
+    {
+        return data < huffy.data;
+    }
+};
+
 Node* heap[100]; // Heap now stores Node pointers
 int heap_size = 0;
 
@@ -25,9 +48,6 @@ void swap(int idx1, int idx2) {
     heap[idx1] = heap[idx2];
     heap[idx2] = tmp;
 }
-
-// Modify heap_insert and heapify to work with Node pointers and their frequencies
-// ...
 
 // Function to insert a new node into the heap
 void heap_insert(Node* node) {
@@ -76,13 +96,13 @@ Node* heap_delete() {
 
 // Function to build the Huffman Tree
 Node* buildHuffmanTree(char data[], int freq[], int size) {
-    Node *left, *right, *top; // Parent
+    Node *left, *right, *top; // top = Parent
 
-    // Step 1: Create leaf nodes for each character and insert them into the heap
+    // Create leaf nodes for each character and insert them into the heap
     for (int i = 0; i < size; ++i)
         heap_insert(new Node(data[i], freq[i]));
 
-    // Step 2: Build the Huffman tree
+    // Build the Huffman tree
     while (heap_size != 1) {
         // Remove the two nodes of the highest priority (lowest frequency) from the heap
         left = heap_delete();
@@ -98,19 +118,59 @@ Node* buildHuffmanTree(char data[], int freq[], int size) {
         heap_insert(top);
     }
 
-    // Step 3: The remaining node is the root node and the tree is complete.
+    // The remaining node is the root node and the tree is complete.
     return heap_delete();
 }
 
 // Function to print the codes from the root of the Huffman Tree. It uses s to store the current code
-void printCodes(Node* root, string str) {
+void storeCodes(Node* root, string str, vector<HuffmanCode> &huffy) {
     if (!root) return;
 
+    // Store data into a map for later use
     if (root->data != '$')
-        cout << root->data << ": " << str << "\n";
+        huffy.push_back(HuffmanCode(root->data, str, root->freq));
 
-    printCodes(root->left, str + "0");
-    printCodes(root->right, str + "1");
+
+    // Recursively call the function to atttain the codes
+    storeCodes(root->left, str + "0", huffy);
+    storeCodes(root->right, str + "1", huffy);
+}
+
+void printSortedCodes(Node *root)
+{
+    // Dynamic array
+    vector<HuffmanCode> huffy;
+
+    // Store the built huffman tree codes into an array
+    storeCodes(root, "", huffy);
+
+    // algorithm library and got the idea from leetcode questions
+    // We will use the struct operator overloading for sort to work
+    // https://stackoverflow.com/questions/36056448/how-overload-operator-for-sort-method-for-objects
+    sort(huffy.begin(), huffy.end());
+
+    cout << "Letter      ";
+    cout << "Frequency   ";
+    cout << "Code        ";
+    cout << "Length      ";
+    cout << "Freq X Len" << endl;
+
+    // To answer last question
+    unsigned weightedPathLength = 0;
+    for(const auto &h : huffy)
+    {
+        unsigned freqXLen = h.freq * h.code.length();
+        cout << h.data                    << "           ";
+        cout << h.freq                    << "          ";
+        cout << h.code                    << "          ";
+        cout << h.code.length()           << "            ";
+        cout << freqXLen << "            ";
+        cout << endl;
+        weightedPathLength += freqXLen;
+    }
+
+    cout << "The weighted minimum path length is: " << weightedPathLength << endl;
+
 }
 
 int main() {
@@ -126,7 +186,8 @@ int main() {
 
     Node* root = buildHuffmanTree(arr, freq, size);
 
-    printCodes(root, "");
+    printSortedCodes(root);
 
+    // This assignment was really hard
     return 0;
 }
